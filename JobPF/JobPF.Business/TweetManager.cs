@@ -9,10 +9,10 @@ namespace JobPF.Business
 {
     public class TweetManager
     {
-        const string consumerKey = "N2GQD4EoHKhMFDHry1EBXA";
-        const string consumerSecret = "fkaANyF9vcbFD1eG4BiFHAnNvsJqtVl3ceHLRr7nls";
-        const string token = "493799448-UhukodbdT7J2JepcMZekvDS85kFjjNCweG92YLV0";
-        const string secret = "kcY7kz26l8qgvCqkWlx9UeOPLHWVG1dkOYmZfKoR0LY";
+        const string consumerKey = "NOT ON GITHUB";
+        const string consumerSecret ="NOT ON GITHUB";
+        const string token = "NOT ON GITHUB";
+        const string secret = "NOT ON GITHUB";
 
         public TwitterStatus SendTweet(string message)
         {
