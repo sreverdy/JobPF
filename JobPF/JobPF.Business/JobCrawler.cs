@@ -5,6 +5,7 @@ using System.Text;
 using System.Net;
 using System.IO;
 using System.Xml.Serialization;
+using System.Web;
 
 
 ///<tr align=left>
@@ -48,6 +49,7 @@ namespace JobPF.Business
     {
         public List<Job> _Jobs;
         public const string XmlFilePath = @"c:\job_data.xml";
+        public const int KeepNb = 50;
         System.Timers.Timer timer;
         public TweetManager _TweetManager = new TweetManager();
 
@@ -99,16 +101,27 @@ namespace JobPF.Business
                             _Jobs.Add(sefiJob);
                         }
                     }
-                    foreach (Job sefiJob in GetTahitiJobJobs())
+                    foreach (Job tahitiJobsJob in GetTahitiJobJobs())
                     {
-                        if (!_Jobs.Exists(job => job.ID == sefiJob.ID && job.Site == "TahitiJob"))
+                        if (!_Jobs.Exists(job => job.ID == tahitiJobsJob.ID && job.Site == "TahitiJob"))
                         {
-                            NewJob(sefiJob);
+                            NewJob(tahitiJobsJob);
                             newJob = true;
-                            _Jobs.Add(sefiJob);
+                            _Jobs.Add(tahitiJobsJob);
                         }
                     }
-                    if (newJob)
+                    foreach (Job proInterimJob in GetProInterimJobs())
+                    {
+                        if (!_Jobs.Exists(job => job.ID == proInterimJob.ID && job.Site == "ProInterim"))
+                        {
+                            NewJob(proInterimJob);
+                            newJob = true;
+                            _Jobs.Add(proInterimJob);
+                        }
+                    }
+
+                    bool trimmed = TrimJobs();
+                    if (newJob || trimmed)
                     {
                         using (var stream = File.Create(XmlFilePath))
                         {
@@ -116,6 +129,9 @@ namespace JobPF.Business
                             serializer.Serialize(stream, _Jobs);
                         }
                     }
+
+                    
+
                 }
                 catch (Exception ex)
                 {
@@ -131,7 +147,7 @@ namespace JobPF.Business
             try
             {
                 var status = _TweetManager.SendTweet(string.Format("Offre d'emploi sur le site {0} : {1}. {2}", job.Site, job.Name, job.Url));
-                Logger.WriteMessage("Tweet envoyé : " + status.Text);
+                Logger.WriteMessage("Tweet envoyé : " + job.Name);
                 //Logger.WriteMessage("Test : job tweeté : " + job.Name);
             }
             catch (Exception e)
@@ -226,6 +242,94 @@ namespace JobPF.Business
                 }
             }
 
+        }
+
+
+        public IEnumerable<Job> GetProInterimJobs()
+        {
+            var request = HttpWebRequest.Create("http://www.pro-interim.pf/annonces.html");
+            var response = request.GetResponse();
+            using (StreamReader streamReader = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding("ISO-8859-1")))
+            {
+                string content = streamReader.ReadToEnd();
+                int index = 0;
+                index = content.IndexOf("En ce moment", index);
+
+                while (true)
+                {
+                    int indexbis = content.IndexOf("color: rgb(128, 0, 128)", index);
+                    int indexter = content.IndexOf("color: purple", index);
+
+                    if (indexbis == -1 && indexter == -1)
+                    {
+                        break;
+                    }
+                    else if (indexbis == -1 && indexter != -1)
+                    {
+                        index = indexter;
+                    }
+                    else if (indexbis != -1 && indexter == -1)
+                    {
+                        index = indexbis;
+                    }
+                    else
+                    {
+                        index = Math.Min(indexbis, indexter);
+                    }
+
+                    int max = content.IndexOf("Nous recherchons &eacute;galement", index);
+                    if (index > max)
+                    {
+                        break;
+                    }
+                    Job j = new Job();
+                    j.Site = "ProInterim";
+
+
+                    int debut = content.IndexOf(">", index) + 1;
+                    int fin = content.IndexOf("<", debut);
+                    if (fin - debut < 4)
+                    {
+                        index = fin;
+                        continue;
+                    }
+                    j.Url = "http://www.pro-interim.pf/annonces.html";
+
+                    j.Name = HttpUtility.HtmlDecode(content.Substring(debut, fin - debut));
+                    j.ID = j.Name;
+
+                    index = fin;
+                    yield return j;
+                }
+            }
+
+        }
+
+        private bool TrimJobs()
+        {
+            if (_Jobs != null)
+            {
+                var toRemove = new List<IEnumerable<Job>>();
+                foreach (var jobs in (_Jobs.GroupBy(j => j.Site)))
+                {
+                    if (jobs.Count() > 20)
+                    {
+                        toRemove.Add(jobs.Take(jobs.Count() - 20));
+                    }
+                }
+                if (toRemove.Count > 0)
+                {
+                    foreach (var jobs in toRemove)
+                    {
+                        foreach (var job in jobs)
+                        {
+                            _Jobs.Remove(job);
+                        }
+                    }
+                    return true;
+                }
+            }
+            return false;
         }
 
 
