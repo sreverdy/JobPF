@@ -312,9 +312,9 @@ namespace JobPF.Business
                 var toRemove = new List<IEnumerable<Job>>();
                 foreach (var jobs in (_Jobs.GroupBy(j => j.Site)))
                 {
-                    if (jobs.Count() > 20)
+                    if (jobs.Count() > KeepNb)
                     {
-                        toRemove.Add(jobs.Take(jobs.Count() - 20));
+                        toRemove.Add(jobs.Take(jobs.Count() - KeepNb));
                     }
                 }
                 if (toRemove.Count > 0)
