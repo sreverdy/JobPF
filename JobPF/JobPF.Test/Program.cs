@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Configuration;
 using JobPF.Business;
 using System.Threading;
 
@@ -11,7 +12,8 @@ namespace JobPF.Test
     {
         static void Main(string[] args)
         {
-            JobCrawler crawler = new JobCrawler();
+            var appSettings = ConfigurationManager.AppSettings;
+            JobCrawler crawler = new JobCrawler(appSettings["consumerKey"], appSettings["consumerSecret"], appSettings["token"], appSettings["secret"]);
             crawler.Start();
 
             while (true)

@@ -9,17 +9,28 @@ namespace JobPF.Business
 {
     public class TweetManager
     {
-        const string consumerKey = "NOT ON GITHUB";
-        const string consumerSecret ="NOT ON GITHUB";
-        const string token = "NOT ON GITHUB";
-        const string secret = "NOT ON GITHUB";
+        private string ConsumerKey { get; set; }
+        private string ConsumerSecret { get; set; }
+        private string Token { get; set; }
+        private string Secret { get; set; }
+
+        public TweetManager(string consumerKey, string consumerSecret, string token, string secret)
+        {
+            ConsumerKey = consumerKey;
+            ConsumerSecret = consumerSecret;
+            Token = token;
+            Secret = secret;
+        }
 
         public TwitterStatus SendTweet(string message)
         {
-            TwitterService service = new TwitterService(consumerKey, consumerSecret);
-            service.AuthenticateWith(token, secret);
+            TwitterService service = new TwitterService(ConsumerKey, ConsumerSecret);
+            service.AuthenticateWith(Token, Secret);
 
-            return service.SendTweet(message);
+            return service.SendTweet(new SendTweetOptions()
+                {
+                     Status = message
+                });
             
         }
     }

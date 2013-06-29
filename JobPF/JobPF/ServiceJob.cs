@@ -7,6 +7,7 @@ using System.Linq;
 using System.ServiceProcess;
 using System.Text;
 using JobPF.Business;
+using System.Configuration;
 
 namespace JobPF
 {
@@ -20,7 +21,8 @@ namespace JobPF
 
         protected override void OnStart(string[] args)
         {
-            crawler = new JobCrawler();
+            var appSettings = ConfigurationManager.AppSettings;
+            JobCrawler crawler = new JobCrawler(appSettings["consumerKey"], appSettings["consumerSecret"], appSettings["token"], appSettings["secret"]);
             try
             {
                 crawler.Start();

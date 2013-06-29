@@ -51,7 +51,12 @@ namespace JobPF.Business
         public const string XmlFilePath = @"c:\job_data.xml";
         public const int KeepNb = 50;
         System.Timers.Timer timer;
-        public TweetManager _TweetManager = new TweetManager();
+        public TweetManager _TweetManager;
+
+        public JobCrawler(string consumerKey, string consumerSecret, string token, string secret)
+        {
+            _TweetManager = new TweetManager(consumerKey, consumerSecret, token, secret);
+        }
 
         public void Start()
         {
