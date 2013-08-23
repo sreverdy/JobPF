@@ -48,22 +48,23 @@ namespace JobPF.Business
     public class JobCrawler
     {
         public List<Job> _Jobs;
-        public const string XmlFilePath = @"c:\job_data.xml";
+        private string _XmlFilePath = @"c:\job_data.xml";
         public const int KeepNb = 50;
         System.Timers.Timer timer;
         public TweetManager _TweetManager;
 
-        public JobCrawler(string consumerKey, string consumerSecret, string token, string secret)
+        public JobCrawler(string xmlFilePath, string consumerKey, string consumerSecret, string token, string secret)
         {
+            _XmlFilePath = xmlFilePath;
             _TweetManager = new TweetManager(consumerKey, consumerSecret, token, secret);
         }
 
         public void Start()
         {
             XmlSerializer serializer = new XmlSerializer(typeof(List<Job>));
-            if (File.Exists(XmlFilePath))
+            if (File.Exists(_XmlFilePath))
             {
-                using (var stream = File.OpenRead(XmlFilePath))
+                using (var stream = File.OpenRead(_XmlFilePath))
                 {
                     _Jobs = (List<Job>)serializer.Deserialize(stream);
                 }
@@ -128,7 +129,7 @@ namespace JobPF.Business
                     bool trimmed = TrimJobs();
                     if (newJob || trimmed)
                     {
-                        using (var stream = File.Create(XmlFilePath))
+                        using (var stream = File.Create(_XmlFilePath))
                         {
                             XmlSerializer serializer = new XmlSerializer(typeof(List<Job>));
                             serializer.Serialize(stream, _Jobs);
@@ -252,56 +253,35 @@ namespace JobPF.Business
 
         public IEnumerable<Job> GetProInterimJobs()
         {
-            var request = HttpWebRequest.Create("http://www.pro-interim.pf/annonces.html");
+            var request = HttpWebRequest.Create("http://www.pro-interim.pf/index.php/offres-d-emplois");
             var response = request.GetResponse();
             using (StreamReader streamReader = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding("ISO-8859-1")))
             {
                 string content = streamReader.ReadToEnd();
                 int index = 0;
-                index = content.IndexOf("En ce moment", index);
+                index = content.IndexOf("Toutes vos offres d'emploi", index);
 
                 while (true)
                 {
-                    int indexbis = content.IndexOf("color: rgb(128, 0, 128)", index);
-                    int indexter = content.IndexOf("color: purple", index);
+                   index = content.IndexOf("v-news-item-title", index);
 
-                    if (indexbis == -1 && indexter == -1)
+                    if (index == -1)
                     {
                         break;
                     }
-                    else if (indexbis == -1 && indexter != -1)
-                    {
-                        index = indexter;
-                    }
-                    else if (indexbis != -1 && indexter == -1)
-                    {
-                        index = indexbis;
-                    }
-                    else
-                    {
-                        index = Math.Min(indexbis, indexter);
-                    }
-
-                    int max = content.IndexOf("Nous recherchons &eacute;galement", index);
-                    if (index > max)
-                    {
-                        break;
-                    }
+                  
                     Job j = new Job();
                     j.Site = "ProInterim";
+                    int debut = content.IndexOf("<a href=\"", index) + 9;
+                    int fin = content.IndexOf("\">", debut);
 
+                    j.Url = string.Format("http://www.pro-interim.pf{0}", content.Substring(debut, fin - debut));
 
-                    int debut = content.IndexOf(">", index) + 1;
-                    int fin = content.IndexOf("<", debut);
-                    if (fin - debut < 4)
-                    {
-                        index = fin;
-                        continue;
-                    }
-                    j.Url = "http://www.pro-interim.pf/annonces.html";
+                    j.ID = content.Substring(debut, fin - debut);
 
+                    debut = content.IndexOf(">", fin) + 1;
+                    fin = content.IndexOf("</a>", debut);
                     j.Name = HttpUtility.HtmlDecode(content.Substring(debut, fin - debut));
-                    j.ID = j.Name;
 
                     index = fin;
                     yield return j;

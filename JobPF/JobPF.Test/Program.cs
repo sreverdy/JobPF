@@ -5,6 +5,7 @@ using System.Text;
 using System.Configuration;
 using JobPF.Business;
 using System.Threading;
+using System.Diagnostics;
 
 namespace JobPF.Test
 {
@@ -12,8 +13,9 @@ namespace JobPF.Test
     {
         static void Main(string[] args)
         {
+          //  EventLog.CreateEventSource("JobPF", "Application");
             var appSettings = ConfigurationManager.AppSettings;
-            JobCrawler crawler = new JobCrawler(appSettings["consumerKey"], appSettings["consumerSecret"], appSettings["token"], appSettings["secret"]);
+            JobCrawler crawler = new JobCrawler(appSettings["xmlPath"], appSettings["consumerKey"], appSettings["consumerSecret"], appSettings["token"], appSettings["secret"]);
             crawler.Start();
 
             while (true)

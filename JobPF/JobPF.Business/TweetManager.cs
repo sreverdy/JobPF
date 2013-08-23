@@ -29,8 +29,9 @@ namespace JobPF.Business
 
             return service.SendTweet(new SendTweetOptions()
                 {
-                     Status = message
+                    Status = message
                 });
+            //return null;
             
         }
     }

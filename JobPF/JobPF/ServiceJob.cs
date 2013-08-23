@@ -22,7 +22,7 @@ namespace JobPF
         protected override void OnStart(string[] args)
         {
             var appSettings = ConfigurationManager.AppSettings;
-            JobCrawler crawler = new JobCrawler(appSettings["consumerKey"], appSettings["consumerSecret"], appSettings["token"], appSettings["secret"]);
+            JobCrawler crawler = new JobCrawler(appSettings["xmlPath"], appSettings["consumerKey"], appSettings["consumerSecret"], appSettings["token"], appSettings["secret"]);
             try
             {
                 crawler.Start();
