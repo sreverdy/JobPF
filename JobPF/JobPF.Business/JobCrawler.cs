@@ -49,7 +49,7 @@ namespace JobPF.Business
     {
         public List<Job> _Jobs;
         private string _XmlFilePath = @"c:\job_data.xml";
-        public const int KeepNb = 50;
+        public const int KeepNb = 200;
         System.Timers.Timer timer;
         public TweetManager _TweetManager;
 
